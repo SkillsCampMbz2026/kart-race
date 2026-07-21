@@ -113,7 +113,7 @@ startRaceBtn.addEventListener('click', () => {
     theme.color,
     slot.dz,
     slot.x,
-    30 + Math.random() * 10
+    46 + Math.random() * 16
   ));
 
   characterSelectEl.classList.add('hidden');
@@ -252,26 +252,56 @@ function roundRectPathAt(x, y, w, h, r) {
   ctx.closePath();
 }
 
+// Drawn as if seen from behind (the classic "chasing the car ahead" pseudo-3D
+// view): a tapered body wider at the rear bumper, wheels peeking out at the
+// sides, brake lights, and the driver's portrait sitting above the cockpit.
 function drawCarSprite(car, p, fog) {
   const halfW = p.screen.w;
   if (halfW < 1) return;
-  const h = halfW * 1.7;
+  const bodyH = halfW * 1.3;
   const bx = p.screen.x, by = p.screen.y;
+  const topW = halfW * 0.72;
 
   ctx.save();
   ctx.globalAlpha = Math.max(0, 1 - fog);
 
   ctx.fillStyle = 'rgba(0,0,0,0.35)';
   ctx.beginPath();
-  ctx.ellipse(bx, by, halfW * 0.9, halfW * 0.3, 0, 0, Math.PI * 2);
+  ctx.ellipse(bx, by + halfW * 0.05, halfW * 1.05, halfW * 0.28, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const wheelW = halfW * 0.32, wheelH = bodyH * 0.4;
+  ctx.fillStyle = '#161616';
+  roundRectPathAt(bx - halfW * 1.1, by - wheelH * 0.95, wheelW, wheelH, wheelW * 0.4);
+  ctx.fill();
+  roundRectPathAt(bx + halfW * 1.1 - wheelW, by - wheelH * 0.95, wheelW, wheelH, wheelW * 0.4);
   ctx.fill();
 
   ctx.fillStyle = car.color;
-  roundRectPathAt(bx - halfW, by - h, halfW * 2, h, Math.min(halfW * 0.3, h * 0.3));
+  ctx.beginPath();
+  ctx.moveTo(bx - halfW, by);
+  ctx.lineTo(bx + halfW, by);
+  ctx.lineTo(bx + topW, by - bodyH);
+  ctx.lineTo(bx - topW, by - bodyH);
+  ctx.closePath();
   ctx.fill();
 
-  const portraitR = halfW * 0.8;
-  const portraitCy = by - h * 0.6;
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.beginPath();
+  ctx.moveTo(bx - topW * 0.85, by - bodyH * 0.55);
+  ctx.lineTo(bx + topW * 0.85, by - bodyH * 0.55);
+  ctx.lineTo(bx + topW * 0.65, by - bodyH);
+  ctx.lineTo(bx - topW * 0.65, by - bodyH);
+  ctx.closePath();
+  ctx.fill();
+
+  const lightW = halfW * 0.22, lightH = bodyH * 0.14;
+  ctx.fillStyle = '#ff4d4d';
+  ctx.fillRect(bx - halfW * 0.95, by - lightH * 1.4, lightW, lightH);
+  ctx.fillRect(bx + halfW * 0.95 - lightW, by - lightH * 1.4, lightW, lightH);
+
+  const portraitR = topW * 0.85;
+  const portraitCy = by - bodyH - portraitR * 0.7;
   ctx.beginPath();
   ctx.arc(bx, portraitCy, portraitR + 2, 0, Math.PI * 2);
   ctx.fillStyle = '#0b1410';

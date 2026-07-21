@@ -6,12 +6,12 @@ class Player {
     this.x = 0;
     this.speed = 0;
 
-    this.maxSpeed = 44;
-    this.accel = 0.9;
-    this.braking = 1.7;
+    this.maxSpeed = 70;
+    this.accel = 1.3;
+    this.braking = 2.2;
     this.coasting = 0.5;
-    this.offRoadDecel = 1.1;
-    this.offRoadMaxSpeed = 14;
+    this.offRoadDecel = 1.4;
+    this.offRoadMaxSpeed = 20;
     this.steerRate = 0.05;
     this.centrifugal = 0.3;
   }
