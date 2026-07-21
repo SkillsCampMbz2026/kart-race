@@ -12,6 +12,7 @@ const THEMES = {
       { id: 'chrollo', name: 'Chrollo Lucilfer', img: 'images/hxh/chrollo.jpg' },
       { id: 'meruem', name: 'Meruem', img: 'images/hxh/meruem.jpg' },
       { id: 'netero', name: 'Isaac Netero', img: 'images/hxh/netero.jpg' },
+      { id: 'alluka', name: 'Alluka Zoldyck', img: 'images/hxh/alluka.webp' },
     ],
   },
   mha: {
