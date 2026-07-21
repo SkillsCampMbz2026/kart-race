@@ -10,6 +10,7 @@ const changeAnimeBtn = document.getElementById('changeAnimeBtn');
 const canvas = document.getElementById('raceCanvas');
 const ctx = canvas.getContext('2d');
 const hudSpeedEl = document.getElementById('hudSpeed');
+const hudPositionEl = document.getElementById('hudPosition');
 const hudAvatarEl = document.getElementById('hudAvatar');
 const minimapCanvas = document.getElementById('minimapCanvas');
 const minimapCtx = minimapCanvas.getContext('2d');
@@ -23,6 +24,12 @@ const CAMERA_DEPTH = 1 / Math.tan((FIELD_OF_VIEW / 2) * Math.PI / 180);
 const DRAW_DISTANCE = 70; // segments ahead we render — keeps the view to "some meters ahead"
 const SKY_COLOR = '#16241c';
 const CAR_HALF_WIDTH = 260;
+const COLLISION_Z = 220; // roughly one car-length
+const COLLISION_X = 0.32; // lateral proximity, in road-half-width units
+const COLLISION_SPEED_PENALTY = 0.4; // speed multiplier applied on impact
+const COLLISION_COOLDOWN_FRAMES = 30; // ~0.5s, so one hit doesn't register every frame while overlapping
+
+let collisionCooldown = 0;
 
 // Fixed starting grid for the 7 AI cars: staggered ahead of the player (who
 // starts at z=0, at the back of the pack), spread across a few lanes so nobody
@@ -113,8 +120,10 @@ startRaceBtn.addEventListener('click', () => {
     theme.color,
     slot.dz,
     slot.x,
-    46 + Math.random() * 16
+    54 + Math.random() * 18
   ));
+
+  collisionCooldown = 0;
 
   characterSelectEl.classList.add('hidden');
   raceScreenEl.classList.remove('hidden');
@@ -319,6 +328,101 @@ function drawCarSprite(car, p, fog) {
   ctx.restore();
 }
 
+function checkCollisions() {
+  if (collisionCooldown > 0) {
+    collisionCooldown--;
+    return;
+  }
+  for (const car of aiCars) {
+    const rawDz = Math.abs(player.z - car.z);
+    const dz = Math.min(rawDz, TRACK.length - rawDz);
+    const dx = Math.abs(player.x - car.x);
+    if (dz < COLLISION_Z && dx < COLLISION_X) {
+      player.speed *= COLLISION_SPEED_PENALTY;
+      collisionCooldown = COLLISION_COOLDOWN_FRAMES;
+      break;
+    }
+  }
+}
+
+function updatePositions() {
+  const ranked = [player, ...aiCars].slice().sort((a, b) => b.totalDistance - a.totalDistance);
+  player.position = ranked.indexOf(player) + 1;
+}
+
+function drawTree(x, y, halfW, heightPx, fog) {
+  if (heightPx < 2) return;
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, 1 - fog);
+
+  const trunkW = halfW * 0.35, trunkH = heightPx * 0.22;
+  ctx.fillStyle = '#5b3a24';
+  ctx.fillRect(x - trunkW / 2, y - trunkH, trunkW, trunkH);
+
+  ctx.fillStyle = '#2f7a3d';
+  ctx.beginPath();
+  ctx.moveTo(x, y - heightPx);
+  ctx.lineTo(x + halfW, y - trunkH - heightPx * 0.25);
+  ctx.lineTo(x - halfW, y - trunkH - heightPx * 0.25);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(x, y - heightPx * 0.62);
+  ctx.lineTo(x + halfW * 0.85, y - trunkH);
+  ctx.lineTo(x - halfW * 0.85, y - trunkH);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawBuilding(item, x, y, halfW, heightPx, fog) {
+  if (heightPx < 2) return;
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, 1 - fog);
+
+  ctx.fillStyle = item.buildingColor;
+  ctx.fillRect(x - halfW, y - heightPx, halfW * 2, heightPx);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  const floors = Math.max(2, Math.floor(heightPx / 40));
+  for (let f = 1; f < floors; f++) {
+    const fy = y - (heightPx * f / floors);
+    ctx.fillRect(x - halfW, fy, halfW * 2, Math.max(1, heightPx * 0.02));
+  }
+
+  ctx.restore();
+}
+
+function drawScenery() {
+  if (!lastBaseSegment) return;
+
+  const withDepth = TRACK.scenery.map(item => {
+    const dz = (item.z - player.z + TRACK.length) % TRACK.length;
+    const n = Math.floor(dz / SEGMENT_LENGTH);
+    if (n >= DRAW_DISTANCE) return null;
+    const segIndex = (lastBaseSegment.index + n) % TRACK.segments.length;
+    const segment = TRACK.segments[segIndex];
+    if (segment.visitedN !== n) return null;
+    return { item, dz, segment };
+  }).filter(Boolean);
+
+  withDepth.sort((a, b) => b.dz - a.dz);
+
+  withDepth.forEach(({ item, dz, segment }) => {
+    const worldX = item.side * (ROAD_HALF_WIDTH + item.offset);
+    const p = { world: { x: worldX, y: 0, z: player.z + dz }, camera: {}, screen: {} };
+    project(p, player.x * ROAD_HALF_WIDTH - segment.curveOffsetX, CAMERA_HEIGHT, player.z, CAMERA_DEPTH, WIDTH, HEIGHT, item.worldHalfWidth);
+    if (p.camera.z <= 0) return;
+
+    const heightPx = p.screen.scale * item.worldHeight * (HEIGHT / 2);
+    const fog = Math.pow(segment.visitedN / DRAW_DISTANCE, 2);
+    if (item.type === 'tree') drawTree(p.screen.x, p.screen.y, p.screen.w, heightPx, fog);
+    else drawBuilding(item, p.screen.x, p.screen.y, p.screen.w, heightPx, fog);
+  });
+}
+
 function drawCars() {
   if (!lastBaseSegment) return;
 
@@ -393,13 +497,17 @@ function drawMinimap() {
 function drawHud() {
   const offRoad = Math.abs(player.x) > 1;
   hudSpeedEl.textContent = `Speed ${player.speed.toFixed(0)}${offRoad ? ' (off-track)' : ''}`;
+  hudPositionEl.textContent = `Position ${player.position}/${aiCars.length + 1}`;
 }
 
 function loop() {
   if (player) {
     player.update(readInput());
     aiCars.forEach(car => car.update());
+    checkCollisions();
+    updatePositions();
     drawRoad();
+    drawScenery();
     drawCars();
     drawMinimap();
     drawHud();

@@ -5,6 +5,7 @@ class Player {
     this.z = 0;
     this.x = 0;
     this.speed = 0;
+    this.totalDistance = 0; // unwrapped distance traveled, used to rank race position
 
     this.maxSpeed = 70;
     this.accel = 1.3;
@@ -42,6 +43,7 @@ class Player {
 
     this.x = Math.max(-2, Math.min(2, this.x));
 
+    this.totalDistance += this.speed;
     this.z = (this.z + this.speed + TRACK.length) % TRACK.length;
   }
 }
@@ -57,11 +59,13 @@ class AICar {
     this.z = (startZ + TRACK.length) % TRACK.length;
     this.x = laneX;
     this.speed = speed;
+    this.totalDistance = startZ; // credit their head start on the grid
     this.img = new Image();
     this.img.src = character.img;
   }
 
   update() {
+    this.totalDistance += this.speed;
     this.z = (this.z + this.speed + TRACK.length) % TRACK.length;
   }
 }

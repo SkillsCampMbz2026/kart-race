@@ -84,6 +84,30 @@ TRACK.length = TRACK.segments.length * SEGMENT_LENGTH;
   TRACK.mapBounds = { minX, maxX, minY, maxY };
 })();
 
+// Roadside scenery: trees and buildings placed at intervals along both sides of
+// the track, well outside the rumble strips. Sizes/offsets are randomized once
+// at build time (not per-frame, which would flicker) and stored on each item.
+const BUILDING_COLORS = ['#4a4e58', '#565b66', '#3f4550', '#5c6270'];
+TRACK.scenery = [];
+(function buildScenery() {
+  const STEP = 3;
+  for (let n = 4; n < TRACK.segments.length; n += STEP) {
+    [-1, 1].forEach(side => {
+      if (Math.random() > 0.55) return;
+      const isTree = Math.random() < 0.65;
+      TRACK.scenery.push({
+        z: n * SEGMENT_LENGTH,
+        side,
+        type: isTree ? 'tree' : 'building',
+        offset: 250 + Math.random() * 900,
+        worldHalfWidth: isTree ? (110 + Math.random() * 70) : (280 + Math.random() * 260),
+        worldHeight: isTree ? (500 + Math.random() * 400) : (900 + Math.random() * 900),
+        buildingColor: BUILDING_COLORS[Math.floor(Math.random() * BUILDING_COLORS.length)],
+      });
+    });
+  }
+})();
+
 function findSegment(z) {
   const idx = Math.floor(z / SEGMENT_LENGTH) % TRACK.segments.length;
   return TRACK.segments[(idx + TRACK.segments.length) % TRACK.segments.length];
