@@ -5,6 +5,7 @@ const characterGridEl = document.getElementById('characterGrid');
 const backToAnimeBtn = document.getElementById('backToAnimeBtn');
 const startRaceBtn = document.getElementById('startRaceBtn');
 const raceScreenEl = document.getElementById('raceScreen');
+const changeAnimeBtn = document.getElementById('changeAnimeBtn');
 
 const canvas = document.getElementById('raceCanvas');
 const ctx = canvas.getContext('2d');
@@ -88,6 +89,15 @@ function buildCharacterGrid() {
 
 backToAnimeBtn.addEventListener('click', () => {
   characterSelectEl.classList.add('hidden');
+  animeSelectEl.classList.remove('hidden');
+});
+
+changeAnimeBtn.addEventListener('click', () => {
+  player = null;
+  aiCars = [];
+  selectedThemeKey = null;
+  selectedCharacter = null;
+  raceScreenEl.classList.add('hidden');
   animeSelectEl.classList.remove('hidden');
 });
 
