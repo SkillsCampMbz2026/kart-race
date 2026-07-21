@@ -43,12 +43,18 @@ function addCurve(num, curveAmount) {
   for (let i = 0; i < third; i++) addSegment(easeInOut(curveAmount, 0, i / third));
 }
 
-// Same stadium shape as before — two straights, two same-direction turns — just
-// built as a 1D sequence of curve values instead of a 2D canvas path.
+// A more varied layout than the original stadium oval — four turns of different
+// sharpness and length instead of two identical 180s, plus uneven straights.
+// All turns bend the same rotational direction, which keeps the minimap's
+// loop-closing math (see buildMinimap below) simple and exact.
+addStraight(70);
+addCurve(55, 3.4);
+addStraight(35);
+addCurve(75, 1.5);
 addStraight(50);
-addCurve(90, 2.6);
-addStraight(50);
-addCurve(90, 2.6);
+addCurve(45, 3.0);
+addStraight(30);
+addCurve(85, 1.7);
 
 TRACK.length = TRACK.segments.length * SEGMENT_LENGTH;
 

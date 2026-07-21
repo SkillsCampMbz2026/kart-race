@@ -45,3 +45,23 @@ class Player {
     this.z = (this.z + this.speed + TRACK.length) % TRACK.length;
   }
 }
+
+// AI racers keep a fixed lane offset and near-constant speed. Because x is a
+// lateral offset relative to the road's own local frame (not world-absolute),
+// holding it constant automatically "follows" every curve — no steering logic
+// needed for a convincing drive around the track.
+class AICar {
+  constructor(character, color, startZ, laneX, speed) {
+    this.character = character;
+    this.color = color;
+    this.z = (startZ + TRACK.length) % TRACK.length;
+    this.x = laneX;
+    this.speed = speed;
+    this.img = new Image();
+    this.img.src = character.img;
+  }
+
+  update() {
+    this.z = (this.z + this.speed + TRACK.length) % TRACK.length;
+  }
+}

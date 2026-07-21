@@ -21,10 +21,24 @@ const CAMERA_HEIGHT = 1000;
 const CAMERA_DEPTH = 1 / Math.tan((FIELD_OF_VIEW / 2) * Math.PI / 180);
 const DRAW_DISTANCE = 70; // segments ahead we render — keeps the view to "some meters ahead"
 const SKY_COLOR = '#16241c';
+const CAR_HALF_WIDTH = 260;
+
+// Fixed starting grid for the 7 AI cars: staggered ahead of the player (who
+// starts at z=0, at the back of the pack), spread across a few lanes so nobody
+// starts stacked on top of each other. Offsets must stay positive — a negative
+// offset wraps around to "just before the finish line", which puts that car at
+// an almost-zero real distance from the player for the first instant, and a
+// point that close to the camera projects to an enormous, screen-filling sprite.
+const AI_START_GRID = [
+  { dz: 220, x: -0.5 }, { dz: 220, x: 0.5 },
+  { dz: 440, x: -0.7 }, { dz: 440, x: 0 }, { dz: 440, x: 0.7 },
+  { dz: 660, x: -0.4 }, { dz: 660, x: 0.4 },
+];
 
 let selectedThemeKey = null;
 let selectedCharacter = null;
 let player = null;
+let aiCars = [];
 let loopStarted = false;
 
 function buildAnimeGrid() {
@@ -82,6 +96,15 @@ startRaceBtn.addEventListener('click', () => {
   hudAvatarEl.src = selectedCharacter.img;
   player = new Player();
   player.color = theme.color;
+
+  const opponents = theme.characters.filter(ch => ch.id !== selectedCharacter.id);
+  aiCars = AI_START_GRID.map((slot, i) => new AICar(
+    opponents[i],
+    theme.color,
+    slot.dz,
+    slot.x,
+    30 + Math.random() * 10
+  ));
 
   characterSelectEl.classList.add('hidden');
   raceScreenEl.classList.remove('hidden');
@@ -161,11 +184,14 @@ function drawSegmentPoly(segment, fog) {
   }
 }
 
+let lastBaseSegment = null;
+
 function drawRoad() {
   ctx.fillStyle = SKY_COLOR;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
   const baseSegment = findSegment(player.z);
+  lastBaseSegment = baseSegment;
   const basePercent = (player.z % SEGMENT_LENGTH) / SEGMENT_LENGTH;
   const cameraX = player.x * ROAD_HALF_WIDTH;
 
@@ -180,6 +206,11 @@ function drawRoad() {
     const segment = TRACK.segments[segIndex];
     const looped = segIndex < baseSegment.index;
     const zOffset = looped ? TRACK.length : 0;
+
+    // Stash the curve offset used for this segment's near edge so car sprites
+    // landing in this segment can project themselves with the same lateral bend.
+    segment.curveOffsetX = x;
+    segment.visitedN = n;
 
     project(segment.p1, cameraX - x, CAMERA_HEIGHT, player.z - zOffset, CAMERA_DEPTH, WIDTH, HEIGHT, ROAD_HALF_WIDTH);
     project(segment.p2, cameraX - x - dx, CAMERA_HEIGHT, player.z - zOffset, CAMERA_DEPTH, WIDTH, HEIGHT, ROAD_HALF_WIDTH);
@@ -199,6 +230,77 @@ function drawRoad() {
   for (let i = visible.length - 1; i >= 0; i--) {
     drawSegmentPoly(visible[i], visible[i].fog);
   }
+}
+
+function roundRectPathAt(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawCarSprite(car, p, fog) {
+  const halfW = p.screen.w;
+  if (halfW < 1) return;
+  const h = halfW * 1.7;
+  const bx = p.screen.x, by = p.screen.y;
+
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, 1 - fog);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath();
+  ctx.ellipse(bx, by, halfW * 0.9, halfW * 0.3, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = car.color;
+  roundRectPathAt(bx - halfW, by - h, halfW * 2, h, Math.min(halfW * 0.3, h * 0.3));
+  ctx.fill();
+
+  const portraitR = halfW * 0.8;
+  const portraitCy = by - h * 0.6;
+  ctx.beginPath();
+  ctx.arc(bx, portraitCy, portraitR + 2, 0, Math.PI * 2);
+  ctx.fillStyle = '#0b1410';
+  ctx.fill();
+  if (car.img.complete && car.img.naturalWidth > 0) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(bx, portraitCy, portraitR, 0, Math.PI * 2);
+    ctx.clip();
+    const s = portraitR * 2.1;
+    ctx.drawImage(car.img, bx - s / 2, portraitCy - s / 2, s, s);
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+function drawCars() {
+  if (!lastBaseSegment) return;
+
+  const withDepth = aiCars.map(car => {
+    const dz = (car.z - player.z + TRACK.length) % TRACK.length;
+    const n = Math.floor(dz / SEGMENT_LENGTH);
+    if (n >= DRAW_DISTANCE) return null;
+    const segIndex = (lastBaseSegment.index + n) % TRACK.segments.length;
+    const segment = TRACK.segments[segIndex];
+    if (segment.visitedN !== n) return null;
+    return { car, dz, segment };
+  }).filter(Boolean);
+
+  withDepth.sort((a, b) => b.dz - a.dz);
+
+  withDepth.forEach(({ car, dz, segment }) => {
+    const p = { world: { x: car.x * ROAD_HALF_WIDTH, y: 0, z: player.z + dz }, camera: {}, screen: {} };
+    project(p, player.x * ROAD_HALF_WIDTH - segment.curveOffsetX, CAMERA_HEIGHT, player.z, CAMERA_DEPTH, WIDTH, HEIGHT, CAR_HALF_WIDTH);
+    if (p.camera.z <= 0) return;
+    const fog = Math.pow(segment.visitedN / DRAW_DISTANCE, 2);
+    drawCarSprite(car, p, fog);
+  });
 }
 
 function drawMinimap() {
@@ -224,6 +326,18 @@ function drawMinimap() {
   minimapCtx.closePath();
   minimapCtx.stroke();
 
+  aiCars.forEach(car => {
+    const seg = findSegment(car.z);
+    const px = pad + (seg.mapX - b.minX) * scale;
+    const py = pad + (seg.mapY - b.minY) * scale;
+    minimapCtx.fillStyle = car.color;
+    minimapCtx.globalAlpha = 0.55;
+    minimapCtx.beginPath();
+    minimapCtx.arc(px, py, 4, 0, Math.PI * 2);
+    minimapCtx.fill();
+  });
+  minimapCtx.globalAlpha = 1;
+
   const seg = findSegment(player.z);
   const px = pad + (seg.mapX - b.minX) * scale;
   const py = pad + (seg.mapY - b.minY) * scale;
@@ -244,7 +358,9 @@ function drawHud() {
 function loop() {
   if (player) {
     player.update(readInput());
+    aiCars.forEach(car => car.update());
     drawRoad();
+    drawCars();
     drawMinimap();
     drawHud();
   }
