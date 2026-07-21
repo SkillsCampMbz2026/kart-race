@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kart Rush — movement test</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <h1>Kart <span>Rush</span></h1>
+
+    <div id="animeSelect">
+      <p class="prompt">Choose an anime</p>
+      <div class="pick-grid" id="animeGrid"></div>
+    </div>
+
+    <div id="characterSelect" class="hidden">
+      <p class="prompt">Choose your racer</p>
+      <div class="pick-grid" id="characterGrid"></div>
+      <div style="text-align:center; margin-top:16px; display:flex; gap:14px; justify-content:center;">
+        <button class="ghost-btn" id="backToAnimeBtn">&larr; Change Anime</button>
+        <button id="startRaceBtn" disabled>Start Race</button>
+      </div>
+    </div>
+
+    <div id="raceScreen" class="hidden">
+      <div class="race-wrap">
+        <canvas id="raceCanvas" width="1000" height="660"></canvas>
+        <div class="hud">
+          <img id="hudAvatar" class="hud-avatar" alt="">
+          <span id="hudSpeed">Speed 0.0</span>
+        </div>
+        <canvas id="minimapCanvas" class="minimap" width="160" height="160"></canvas>
+      </div>
+      <p class="controls-hint">Controls: Space = accelerate, Down/S = brake, Left/Right (or A/D) = turn.</p>
+    </div>
+  </div>
+
+  <script src="characters.js"></script>
+  <script src="track.js"></script>
+  <script src="car.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

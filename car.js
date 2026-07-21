@@ -1,0 +1,47 @@
+// Player state lives directly in track space now: z = distance traveled along the
+// road, x = lateral offset in road-half-widths (0 = center line, +-1 = road edge).
+class Player {
+  constructor() {
+    this.z = 0;
+    this.x = 0;
+    this.speed = 0;
+
+    this.maxSpeed = 44;
+    this.accel = 0.9;
+    this.braking = 1.7;
+    this.coasting = 0.5;
+    this.offRoadDecel = 1.1;
+    this.offRoadMaxSpeed = 14;
+    this.steerRate = 0.05;
+    this.centrifugal = 0.3;
+  }
+
+  update(input) {
+    const { throttle, steer } = input;
+
+    if (throttle > 0) this.speed += this.accel;
+    else if (throttle < 0) this.speed -= this.braking;
+    else this.speed -= this.coasting;
+
+    const offRoad = Math.abs(this.x) > 1;
+    if (offRoad) {
+      this.speed -= this.offRoadDecel;
+      this.speed = Math.min(this.speed, this.offRoadMaxSpeed);
+    }
+
+    this.speed = Math.max(0, Math.min(this.maxSpeed, this.speed));
+
+    const speedPercent = this.speed / this.maxSpeed;
+    const steerStrength = 0.3 + 0.7 * speedPercent; // some steering authority even at low speed
+    this.x += steer * this.steerRate * steerStrength;
+
+    // The road's curvature tugs the car toward the outside of the turn, so cutting
+    // a corner takes active counter-steering, like a real (if gentle) kart.
+    const segment = findSegment(this.z);
+    this.x -= segment.curve * speedPercent * this.centrifugal * 0.01;
+
+    this.x = Math.max(-2, Math.min(2, this.x));
+
+    this.z = (this.z + this.speed + TRACK.length) % TRACK.length;
+  }
+}

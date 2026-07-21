@@ -1,0 +1,164 @@
+:root {
+  --bg: #0b1410;
+  --panel: #123a2b;
+  --accent: #39d98a;
+  --muted: #7fa895;
+  --text: #eafff4;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at 50% 0%, #163a2a, var(--bg) 70%);
+  color: var(--text);
+  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.app {
+  width: 100%;
+  max-width: 1040px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  text-align: center;
+}
+h1 span { color: var(--accent); }
+
+.hidden { display: none !important; }
+
+.prompt {
+  color: var(--muted);
+  margin: 0;
+}
+
+.pick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .pick-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.pick-card {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--panel);
+  border: 2px solid rgba(57, 217, 138, 0.25);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.pick-card:hover, .pick-card.selected {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+}
+.pick-card img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  object-position: top center;
+}
+.pick-card .swatch {
+  height: 6px;
+  width: 100%;
+}
+.pick-card span {
+  padding: 8px 6px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+#startRaceBtn {
+  margin-top: 4px;
+  padding: 12px 28px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #052a1a;
+  cursor: pointer;
+}
+#startRaceBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.race-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+}
+
+#raceCanvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+  border: 2px solid rgba(57, 217, 138, 0.3);
+  background: #2f5233;
+}
+
+.hud {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(4, 20, 14, 0.75);
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.hud-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: top center;
+  border: 3px solid var(--accent);
+}
+
+.minimap {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border-radius: 10px;
+  background: rgba(4, 20, 14, 0.75);
+  border: 2px solid var(--accent);
+}
+
+.controls-hint {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.ghost-btn {
+  all: unset;
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 700;
+  padding: 8px 0;
+}
