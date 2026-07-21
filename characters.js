@@ -102,6 +102,7 @@ const THEMES = {
       { id: 'shinobu', name: 'Shinobu Kocho', img: 'images/demonslayer/shinobu.webp' },
       { id: 'rengoku', name: 'Kyojuro Rengoku', img: 'images/demonslayer/rengoku.webp' },
       { id: 'muzan', name: 'Muzan Kibutsuji', img: 'images/demonslayer/muzan.webp' },
+      { id: 'muichiro', name: 'Muichiro Tokito', img: 'images/demonslayer/muichiro.webp' },
     ],
   },
   conan: {
