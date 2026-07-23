@@ -6,7 +6,7 @@
   --text: #eafff4;
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 body {
   margin: 0;
@@ -18,6 +18,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 20px;
+  touch-action: manipulation;
 }
 
 .app {
@@ -103,19 +104,32 @@ h1 span { color: var(--accent); }
   cursor: not-allowed;
 }
 
+#raceScreen {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
 .race-wrap {
   position: relative;
   width: 100%;
   max-width: 1000px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #raceCanvas {
   width: 100%;
   height: auto;
+  max-height: 100%;
   display: block;
   border-radius: 12px;
   border: 2px solid rgba(57, 217, 138, 0.3);
   background: #2f5233;
+  touch-action: none;
 }
 
 .hud {
@@ -130,6 +144,12 @@ h1 span { color: var(--accent); }
   border-radius: 10px;
   font-weight: 700;
   font-size: 0.95rem;
+}
+
+@media (max-width: 420px) {
+  .hud { padding: 5px 8px; gap: 6px; font-size: 0.7rem; top: 6px; left: 6px; }
+  .hud-avatar { width: 36px; height: 36px; }
+  .minimap { width: 90px; height: 90px; top: 6px; right: 6px; }
 }
 
 .hud-avatar {
@@ -155,10 +175,121 @@ h1 span { color: var(--accent); }
   font-size: 0.85rem;
 }
 
+.rotate-hint {
+  display: none;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
 .ghost-btn {
   all: unset;
   cursor: pointer;
   color: var(--accent);
   font-weight: 700;
   padding: 8px 0;
+}
+
+/* Touch controls: hidden by default (mouse/keyboard devices), shown on
+   touch-primary devices via the media query below so desktop stays clean. */
+.touch-controls {
+  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.touch-steer,
+.touch-pedals {
+  position: absolute;
+  bottom: 14px;
+  display: flex;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.touch-steer { left: 14px; }
+.touch-pedals { right: 14px; align-items: flex-end; }
+
+.touch-btn {
+  all: unset;
+  box-sizing: border-box;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(4, 20, 14, 0.55);
+  border: 2px solid rgba(57, 217, 138, 0.6);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-align: center;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.touch-btn:active,
+.touch-btn.pressed {
+  background: rgba(57, 217, 138, 0.35);
+  transform: scale(0.94);
+}
+
+.touch-btn.gas {
+  width: 78px;
+  height: 78px;
+  font-size: 0.95rem;
+  background: rgba(57, 217, 138, 0.25);
+  border-color: var(--accent);
+}
+
+.touch-btn.brake {
+  font-size: 0.75rem;
+  align-self: flex-end;
+  margin-bottom: 10px;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .touch-controls { display: block; }
+
+  /* On phones, let the race screen fill the viewport instead of scaling to
+     page width and running off the bottom of a short landscape screen. */
+  body.racing {
+    height: 100dvh;
+    min-height: 0;
+    padding: 6px;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  body.racing .app {
+    height: 100%;
+    gap: 6px;
+  }
+  body.racing h1 { display: none; }
+  body.racing #raceScreen {
+    flex: 1;
+    min-height: 0;
+    gap: 4px;
+  }
+  body.racing .race-wrap {
+    flex: 1;
+    min-height: 0;
+  }
+  body.racing #raceCanvas {
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) and (orientation: portrait) {
+  .rotate-hint { display: block; }
+}
+
+@media (hover: none) and (pointer: coarse) and (max-height: 480px) {
+  body.racing .controls-hint { display: none; }
 }

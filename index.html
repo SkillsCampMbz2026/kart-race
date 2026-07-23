@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Kart Rush — movement test</title>
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -33,8 +33,19 @@
           <span id="hudPosition">Position 1/1</span>
         </div>
         <canvas id="minimapCanvas" class="minimap" width="160" height="160"></canvas>
+        <div class="touch-controls">
+          <div class="touch-steer">
+            <button type="button" class="touch-btn" id="touchLeftBtn" aria-label="Steer left">&#9664;</button>
+            <button type="button" class="touch-btn" id="touchRightBtn" aria-label="Steer right">&#9654;</button>
+          </div>
+          <div class="touch-pedals">
+            <button type="button" class="touch-btn brake" id="touchBrakeBtn" aria-label="Brake">BRAKE</button>
+            <button type="button" class="touch-btn gas" id="touchGasBtn" aria-label="Accelerate">GAS</button>
+          </div>
+        </div>
       </div>
-      <p class="controls-hint">Controls: Space = accelerate, Down/S = brake, Left/Right (or A/D) = turn.</p>
+      <p class="controls-hint">Controls: Space = accelerate, Down/S = brake, Left/Right (or A/D) = turn. On mobile, use the on-screen buttons.</p>
+      <p class="rotate-hint">Rotate your phone sideways for the best view.</p>
       <div style="text-align:center;">
         <button class="ghost-btn" id="changeAnimeBtn">&larr; Change Anime</button>
       </div>

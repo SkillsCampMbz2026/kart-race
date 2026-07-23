@@ -106,6 +106,7 @@ changeAnimeBtn.addEventListener('click', () => {
   selectedCharacter = null;
   raceScreenEl.classList.add('hidden');
   animeSelectEl.classList.remove('hidden');
+  document.body.classList.remove('racing');
 });
 
 startRaceBtn.addEventListener('click', () => {
@@ -127,6 +128,7 @@ startRaceBtn.addEventListener('click', () => {
 
   characterSelectEl.classList.add('hidden');
   raceScreenEl.classList.remove('hidden');
+  document.body.classList.add('racing');
 
   if (!loopStarted) {
     loopStarted = true;
@@ -153,6 +155,34 @@ function readInput() {
   else if (keys['arrowright'] || keys['d']) steer = 1;
   return { throttle, steer };
 }
+
+// On-screen buttons feed the same `keys` map the keyboard uses, so readInput()
+// doesn't need to know whether the source was a touch or a key press. Pointer
+// events (rather than touchstart/end) cover touch, mouse, and pen in one
+// listener, and keep working if a finger drags off the button before lifting.
+function bindTouchButton(el, key) {
+  if (!el) return;
+  const press = e => {
+    e.preventDefault();
+    keys[key] = true;
+    el.classList.add('pressed');
+  };
+  const release = e => {
+    e.preventDefault();
+    keys[key] = false;
+    el.classList.remove('pressed');
+  };
+  el.addEventListener('pointerdown', press);
+  el.addEventListener('pointerup', release);
+  el.addEventListener('pointercancel', release);
+  el.addEventListener('pointerleave', release);
+  el.addEventListener('contextmenu', e => e.preventDefault());
+}
+
+bindTouchButton(document.getElementById('touchLeftBtn'), 'arrowleft');
+bindTouchButton(document.getElementById('touchRightBtn'), 'arrowright');
+bindTouchButton(document.getElementById('touchGasBtn'), 'arrowup');
+bindTouchButton(document.getElementById('touchBrakeBtn'), 'arrowdown');
 
 function lerpColor(hexA, hexB, t) {
   const a = parseInt(hexA.slice(1), 16), b = parseInt(hexB.slice(1), 16);
