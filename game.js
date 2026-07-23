@@ -144,7 +144,7 @@ startRaceBtn.addEventListener('click', () => {
     theme.color,
     slot.dz,
     slot.x,
-    115 + Math.random() * 39
+    153 + Math.random() * 52
   ));
 
   collisionCooldown = 0;
