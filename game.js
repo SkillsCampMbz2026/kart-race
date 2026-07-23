@@ -159,11 +159,14 @@ function readInput() {
 // On-screen buttons feed the same `keys` map the keyboard uses, so readInput()
 // doesn't need to know whether the source was a touch or a key press. Pointer
 // events (rather than touchstart/end) cover touch, mouse, and pen in one
-// listener, and keep working if a finger drags off the button before lifting.
+// listener. Pointer capture keeps the button "held" even if a finger drifts
+// off its visual bounds mid-press (fingertips aren't pixel-precise) — without
+// it, a stray pointerleave releases the key and gameplay feels unresponsive.
 function bindTouchButton(el, key) {
   if (!el) return;
   const press = e => {
     e.preventDefault();
+    try { el.setPointerCapture(e.pointerId); } catch (err) { /* capture is a nice-to-have, not required */ }
     keys[key] = true;
     el.classList.add('pressed');
   };
@@ -175,7 +178,7 @@ function bindTouchButton(el, key) {
   el.addEventListener('pointerdown', press);
   el.addEventListener('pointerup', release);
   el.addEventListener('pointercancel', release);
-  el.addEventListener('pointerleave', release);
+  el.addEventListener('lostpointercapture', release);
   el.addEventListener('contextmenu', e => e.preventDefault());
 }
 
