@@ -245,9 +245,8 @@ h1 span { color: var(--accent); }
 
 .touch-brake {
   position: absolute;
-  left: 50%;
+  right: max(14px, env(safe-area-inset-right));
   bottom: max(14px, env(safe-area-inset-bottom));
-  transform: translateX(-50%);
   pointer-events: auto;
   background: rgba(4, 20, 14, 0.35);
   font-size: 0.8rem;
@@ -255,7 +254,7 @@ h1 span { color: var(--accent); }
 
 .touch-brake:active,
 .touch-brake.pressed {
-  transform: translateX(-50%) scale(0.94);
+  transform: scale(0.94);
 }
 
 @media (hover: none) and (pointer: coarse) {
