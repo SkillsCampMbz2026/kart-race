@@ -22,7 +22,30 @@ const FIELD_OF_VIEW = 100;
 const CAMERA_HEIGHT = 1000;
 const CAMERA_DEPTH = 1 / Math.tan((FIELD_OF_VIEW / 2) * Math.PI / 180);
 const DRAW_DISTANCE = 70; // segments ahead we render — keeps the view to "some meters ahead"
-const SKY_COLOR = '#16241c';
+const SKY_TOP = '#050d0a';
+const SKY_HORIZON = '#1c3327';
+const SKY_COLOR = SKY_HORIZON; // fog fade target for segments/scenery receding into the distance
+
+// Sky gradient and moon glow don't change frame to frame, so build them once
+// instead of re-creating gradient objects 60 times a second.
+const skyGradient = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+skyGradient.addColorStop(0, SKY_TOP);
+skyGradient.addColorStop(1, SKY_HORIZON);
+
+const MOON_X = WIDTH * 0.5, MOON_Y = HEIGHT * 0.13, MOON_R = 110;
+const moonGlow = ctx.createRadialGradient(MOON_X, MOON_Y, 0, MOON_X, MOON_Y, MOON_R);
+moonGlow.addColorStop(0, 'rgba(232, 240, 220, 0.9)');
+moonGlow.addColorStop(0.35, 'rgba(232, 240, 220, 0.35)');
+moonGlow.addColorStop(1, 'rgba(232, 240, 220, 0)');
+
+// A handful of soft cloud puffs scattered across a sky band wider than the
+// canvas, so they can scroll and wrap seamlessly as the camera turns.
+const CLOUD_FIELD_WIDTH = WIDTH * 2.4;
+const CLOUDS = Array.from({ length: 8 }, () => ({
+  x: Math.random() * CLOUD_FIELD_WIDTH,
+  y: HEIGHT * (0.08 + Math.random() * 0.28),
+  r: 40 + Math.random() * 50,
+}));
 const CAR_HALF_WIDTH = 260;
 const COLLISION_Z = 220; // roughly one car-length
 const COLLISION_X = 0.32; // lateral proximity, in road-half-width units
@@ -220,6 +243,13 @@ function drawSegmentPoly(segment, fog) {
   const roadColor = fog > 0 ? lerpColor(segment.color.road, SKY_COLOR, fog) : segment.color.road;
   polygon(p1.x - p1.w, p1.y, p1.x + p1.w, p1.y, p2.x + p2.w, p2.y, p2.x - p2.w, p2.y, roadColor);
 
+  // Dashed center lane line: on for 3 segments, off for 3, like painted road markings.
+  if (segment.index % 6 < 3) {
+    const laneColor = fog > 0 ? lerpColor('#f2e9c9', SKY_COLOR, fog) : '#f2e9c9';
+    const lw1 = p1.w * 0.045, lw2 = p2.w * 0.045;
+    polygon(p1.x - lw1, p1.y, p1.x + lw1, p1.y, p2.x + lw2, p2.y, p2.x - lw2, p2.y, laneColor);
+  }
+
   if (segment.index === 0) {
     const squares = 10;
     const segW = (p1.w * 2) / squares;
@@ -234,16 +264,45 @@ function drawSegmentPoly(segment, fog) {
   }
 }
 
+// Gradient + moon are screen-fixed; clouds drift in the opposite direction of
+// steering (and slowly with distance travelled) for a cheap parallax cue.
+function drawSky(cameraX) {
+  ctx.fillStyle = skyGradient;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  ctx.fillStyle = moonGlow;
+  ctx.beginPath();
+  ctx.arc(MOON_X, MOON_Y, MOON_R, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#eef4e6';
+  ctx.beginPath();
+  ctx.arc(MOON_X, MOON_Y, MOON_R * 0.32, 0, Math.PI * 2);
+  ctx.fill();
+
+  const scroll = ((cameraX * 0.15 + player.z * 0.03) % CLOUD_FIELD_WIDTH + CLOUD_FIELD_WIDTH) % CLOUD_FIELD_WIDTH;
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+  CLOUDS.forEach(cloud => {
+    const x = ((cloud.x - scroll) % CLOUD_FIELD_WIDTH + CLOUD_FIELD_WIDTH) % CLOUD_FIELD_WIDTH;
+    // Draw at x and one field-width to the left so a cloud straddling the
+    // wrap point still renders whole instead of popping at the seam.
+    [x, x - CLOUD_FIELD_WIDTH].forEach(cx => {
+      if (cx < -cloud.r || cx > WIDTH + cloud.r) return;
+      ctx.beginPath();
+      ctx.ellipse(cx, cloud.y, cloud.r, cloud.r * 0.55, 0, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  });
+}
+
 let lastBaseSegment = null;
 
 function drawRoad() {
-  ctx.fillStyle = SKY_COLOR;
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  const cameraX = player.x * ROAD_HALF_WIDTH;
+  drawSky(cameraX);
 
   const baseSegment = findSegment(player.z);
   lastBaseSegment = baseSegment;
   const basePercent = (player.z % SEGMENT_LENGTH) / SEGMENT_LENGTH;
-  const cameraX = player.x * ROAD_HALF_WIDTH;
 
   let maxy = HEIGHT;
   let x = 0;
