@@ -136,7 +136,7 @@ startRaceBtn.addEventListener('click', () => {
   }
 });
 
-const DRIVE_KEYS = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd', ' '];
+const DRIVE_KEYS = ['arrowleft', 'arrowright', 'a', 'd'];
 const keys = {};
 window.addEventListener('keydown', e => {
   const k = e.key.toLowerCase();
@@ -147,13 +147,10 @@ window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 
 function readInput() {
-  let throttle = 0;
   let steer = 0;
-  if (keys[' '] || keys['arrowup'] || keys['w']) throttle = 1;
-  else if (keys['arrowdown'] || keys['s']) throttle = -1;
   if (keys['arrowleft'] || keys['a']) steer = -1;
   else if (keys['arrowright'] || keys['d']) steer = 1;
-  return { throttle, steer };
+  return { throttle: 1, steer }; // gas is automatic — steering is the only input
 }
 
 // On-screen buttons feed the same `keys` map the keyboard uses, so readInput()
@@ -184,8 +181,6 @@ function bindTouchButton(el, key) {
 
 bindTouchButton(document.getElementById('touchLeftBtn'), 'arrowleft');
 bindTouchButton(document.getElementById('touchRightBtn'), 'arrowright');
-bindTouchButton(document.getElementById('touchGasBtn'), 'arrowup');
-bindTouchButton(document.getElementById('touchBrakeBtn'), 'arrowdown');
 
 function lerpColor(hexA, hexB, t) {
   const a = parseInt(hexA.slice(1), 16), b = parseInt(hexB.slice(1), 16);

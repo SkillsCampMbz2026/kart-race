@@ -199,18 +199,6 @@ h1 span { color: var(--accent); }
   pointer-events: none;
 }
 
-.touch-steer,
-.touch-pedals {
-  position: absolute;
-  bottom: max(14px, env(safe-area-inset-bottom));
-  display: flex;
-  gap: 14px;
-  pointer-events: auto;
-}
-
-.touch-steer { left: max(14px, env(safe-area-inset-left)); }
-.touch-pedals { right: max(14px, env(safe-area-inset-right)); align-items: flex-end; }
-
 .touch-btn {
   all: unset;
   box-sizing: border-box;
@@ -239,19 +227,21 @@ h1 span { color: var(--accent); }
   transform: scale(0.94);
 }
 
-.touch-btn.gas {
-  width: 92px;
-  height: 92px;
-  font-size: 1rem;
-  background: rgba(57, 217, 138, 0.25);
-  border-color: var(--accent);
+.touch-side {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: auto;
+  background: rgba(4, 20, 14, 0.35);
 }
 
-.touch-btn.brake {
-  font-size: 0.75rem;
-  align-self: flex-end;
-  margin-bottom: 10px;
+.touch-side:active,
+.touch-side.pressed {
+  transform: translateY(-50%) scale(0.94);
 }
+
+.touch-left { left: max(14px, env(safe-area-inset-left)); }
+.touch-right { right: max(14px, env(safe-area-inset-right)); }
 
 @media (hover: none) and (pointer: coarse) {
   .touch-controls { display: block; }
