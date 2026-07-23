@@ -7,12 +7,12 @@ class Player {
     this.speed = 0;
     this.totalDistance = 0; // unwrapped distance traveled, used to rank race position
 
-    this.maxSpeed = 130;
-    this.accel = 2.5;
-    this.braking = 4.0;
-    this.coasting = 0.9;
-    this.offRoadDecel = 2.6;
-    this.offRoadMaxSpeed = 38;
+    this.maxSpeed = 150;
+    this.accel = 2.9;
+    this.braking = 4.6;
+    this.coasting = 1.0;
+    this.offRoadDecel = 3.0;
+    this.offRoadMaxSpeed = 44;
     this.steerRate = 0.05;
     this.centrifugal = 0.3;
   }
