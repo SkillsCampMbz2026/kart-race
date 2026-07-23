@@ -243,6 +243,21 @@ h1 span { color: var(--accent); }
 .touch-left { left: max(14px, env(safe-area-inset-left)); }
 .touch-right { right: max(14px, env(safe-area-inset-right)); }
 
+.touch-brake {
+  position: absolute;
+  left: 50%;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  pointer-events: auto;
+  background: rgba(4, 20, 14, 0.35);
+  font-size: 0.8rem;
+}
+
+.touch-brake:active,
+.touch-brake.pressed {
+  transform: translateX(-50%) scale(0.94);
+}
+
 @media (hover: none) and (pointer: coarse) {
   .touch-controls { display: block; }
 
